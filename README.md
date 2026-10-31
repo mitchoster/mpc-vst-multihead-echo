@@ -58,6 +58,25 @@ Set `MHEC_HTTP=0` in the plugin's environment to turn the listener off entirely.
 The page's source is `web/index.html`; `web/embed.py` generates the C++ string and
 `web/pagetest.mjs` runs the page headless under node (controls register, geometry, swipe, writes).
 
+## Credits
+
+**The companion screen is VADER's idea.** [VADER](https://github.com/sunskiefer/VADER) by
+**sunskiefer (L'Cronx)** has served its screen as a web page from the plugin since **v0.6.0
+(2026-10-24)**, for exactly the reason this port ran into: MPC draws a plugin's screen itself, a
+plugin cannot draw on the device's display, and every moving widget costs MPC a redraw (a busy one
+crackled the audio). His README states that plainly, and it is why the screen moved to the phone.
+
+What is borrowed is the **approach**, not code: one canvas, motion extrapolated in the page between
+updates, fullscreen, "add to home screen", and controls that get out of the way. The page here was
+written from scratch against our own status feed, and the transport differs — VADER streams binary
+frames over a WebSocket and answers mDNS as `vader.local`; this panel polls a small JSON document
+about seven times a second and integrates the motion client-side. VADER is MIT-licensed; see
+`THIRD_PARTY_NOTICES.md`.
+
+Also: [sd88me/mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins) (MIT) is the framework this
+plugin is built and packaged with, and the engine in `src/ported/` is Dusk Audio's Tape Echo 2
+(GPL-3.0) via `schwung-tape-echo2`.
+
 ## Layout of this repository
 
 ```

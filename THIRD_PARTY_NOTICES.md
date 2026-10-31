@@ -22,6 +22,16 @@ imperfection, stereo spread, the module shell, the companion server and page) is
 The plugin is built with [`sd88me/mpc-vst-plugins`](https://github.com/sd88me/mpc-vst-plugins) (MIT). It
 is not vendored here; `build.sh` and `test.sh` need a checkout, pointed at by `MPC_VST_PLUGINS`.
 
+## Ideas credited (no code taken)
+
+**VADER — [sunskiefer/VADER](https://github.com/sunskiefer/VADER), MIT.** The companion screen of
+this plugin follows VADER's idea: since v0.6.0 (2026-10-24) VADER serves its own screen as a web page
+because MPC draws plugin screens itself and every moving widget costs a redraw. We adopted the
+presentation approach (single canvas, motion extrapolated between updates, fullscreen, add to home
+screen, fading controls) and the reasoning; the implementation is independent and the transport is
+different (HTTP polling of a JSON status feed with client-side integration, not WebSocket frames and
+mDNS). No VADER source code, text or artwork is included.
+
 ## Not included
 
 No AIR Music Tech or Akai material: no binaries, impulse responses, presets, artwork or skin files.
