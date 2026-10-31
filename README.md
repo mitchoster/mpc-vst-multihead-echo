@@ -9,6 +9,23 @@ AIR, inMusic or Akai. See `THIRD_PARTY_NOTICES.md`.
 
 ![the companion panel](docs/companion-panel-echo.png)
 
+The companion screen is three pages, swiped left and right, and every control on them is live:
+
+| ECHO | TAPE | SETUP |
+|---|---|---|
+| ![echo page](docs/companion-panel-echo.png) | ![tape page](docs/companion-panel-tape.png) | ![setup page](docs/companion-panel-setup.png) |
+
+On a phone it lays itself out for the narrow screen:
+
+<img src="docs/companion-panel-portrait.png" width="300" alt="the panel on a phone">
+
+And this is what the plugin looks like on the device itself, which is what MPC keeps drawing when
+the phone is not around:
+
+| PEDAL | CHARACTER |
+|---|---|
+| ![roots pedal page](docs/ui-preview/device_roots_pedal.png) | ![roots character page](docs/ui-preview/device_roots_character.png) |
+
 ## Verified on the device
 
 MPC Live II, MPC OS 3.9.1.2 (AZ0x 5.0.17), 2026-11-01:
