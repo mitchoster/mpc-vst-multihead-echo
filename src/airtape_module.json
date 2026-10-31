@@ -1,0 +1,336 @@
+{
+  "id": "airtape",
+  "name": "MPC Multihead Echo",
+  "abbrev": "MHE",
+  "version": "0.1.0",
+  "description": "Multi-head tape echo: Dusk Tape Echo 2 core with our preamp modes, chorus, dropouts/hiss, stereo spread and joggable playhead.",
+  "author": "MPC Multihead Echo (engine: Tape Echo 2 by Dusk Audio, GPL-3.0)",
+  "dsp": "mpc_multihead_echo.so",
+  "api_version": 2,
+  "component_type": "audio_fx",
+  "capabilities": {
+    "audio_out": true,
+    "audio_in": true,
+    "midi_in": false,
+    "midi_out": false,
+    "chainable": true,
+    "component_type": "audio_fx",
+    "chain_params": [
+      {
+        "key": "mode",
+        "name": "Echo Mode",
+        "type": "enum",
+        "options": [
+          "H1",
+          "H2",
+          "H3",
+          "H2+3",
+          "H1+R",
+          "H2+R",
+          "H3+R",
+          "H12+R",
+          "H23+R",
+          "H13+R",
+          "H123R",
+          "Rev"
+        ],
+        "default": "H3",
+        "qlink_ticks": 4
+      },
+      {
+        "key": "rate",
+        "name": "Rate",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.45
+      },
+      {
+        "key": "intensity",
+        "name": "Intensity",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.4
+      },
+      {
+        "key": "echo",
+        "name": "Echo Vol",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.6
+      },
+      {
+        "key": "reverb",
+        "name": "Reverb",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.2
+      },
+      {
+        "key": "mix",
+        "name": "Mix",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.5
+      },
+      {
+        "key": "bass",
+        "name": "Bass",
+        "type": "float",
+        "min": -1,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "treble",
+        "name": "Treble",
+        "type": "float",
+        "min": -1,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "wow",
+        "name": "Wow/Flutter",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.15
+      },
+      {
+        "key": "preamp",
+        "name": "Preamp",
+        "type": "enum",
+        "options": [
+          "Clean",
+          "Warm",
+          "Dirty"
+        ],
+        "default": "Warm"
+      },
+      {
+        "key": "chorus",
+        "name": "Chorus",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "dropouts",
+        "name": "Dropouts",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "hiss",
+        "name": "Hiss",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "spread",
+        "name": "Spread",
+        "type": "float",
+        "min": 0,
+        "max": 5,
+        "default": 0.0
+      },
+      {
+        "key": "jog",
+        "name": "Jog",
+        "type": "enum",
+        "min": 0,
+        "max": 1,
+        "default": "Off",
+        "options": [
+          "Off",
+          "On"
+        ]
+      },
+      {
+        "key": "ui",
+        "name": "Interface",
+        "type": "enum",
+        "options": [
+          "Roots"
+        ],
+        "default": "Roots"
+      },
+      {
+        "key": "saturation",
+        "name": "Saturation",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "tapeage",
+        "name": "Tape Age",
+        "type": "enum",
+        "options": [
+          "New",
+          "Used",
+          "Worn"
+        ],
+        "default": "Used",
+        "qlink_ticks": 4
+      },
+      {
+        "key": "wetonly",
+        "name": "Wet Only",
+        "type": "enum",
+        "options": [
+          "Off",
+          "On"
+        ],
+        "default": "Off"
+      },
+      {
+        "key": "mode_next",
+        "name": "Next Mode",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0,
+        "momentary": true
+      },
+      {
+        "key": "warp",
+        "name": "Warp",
+        "type": "enum",
+        "min": 0,
+        "max": 1,
+        "default": "Off",
+        "options": [
+          "Off",
+          "On"
+        ]
+      },
+      {
+        "key": "twist",
+        "name": "Twist",
+        "type": "enum",
+        "min": 0,
+        "max": 1,
+        "default": "Off",
+        "options": [
+          "Off",
+          "On"
+        ]
+      },
+      {
+        "key": "twisttype",
+        "name": "Twist Type",
+        "type": "enum",
+        "options": [
+          "Normal",
+          "Hard",
+          "Natural"
+        ],
+        "default": "Normal",
+        "qlink_ticks": 4
+      },
+      {
+        "key": "sync",
+        "name": "Sync",
+        "type": "enum",
+        "options": [
+          "Off",
+          "1/32",
+          "1/16",
+          "1/8"
+        ],
+        "default": "Off",
+        "qlink_ticks": 4
+      },
+      {
+        "key": "drift",
+        "name": "Drift",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "revmode",
+        "name": "Reverb Mode",
+        "type": "enum",
+        "options": [
+          "201",
+          "202"
+        ],
+        "default": "202",
+        "qlink_ticks": 4
+      },
+      {
+        "key": "warptype",
+        "name": "Warp Type",
+        "type": "enum",
+        "options": [
+          "Normal",
+          "Deep",
+          "Wild"
+        ],
+        "default": "Normal",
+        "qlink_ticks": 4
+      },
+      {
+        "key": "viz_wet",
+        "name": "Echo Level",
+        "type": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0.0
+      },
+      {
+        "key": "viz_fb",
+        "name": "Feedback State",
+        "type": "enum",
+        "options": [
+          "Safe",
+          "Hot",
+          "Unstable"
+        ],
+        "default": "Safe"
+      },
+      {
+        "key": "tempo_bpm",
+        "name": "Tempo",
+        "type": "float",
+        "min": 0,
+        "max": 300,
+        "default": 120.0,
+        "display": "string"
+      },
+      {
+        "key": "delay_ms",
+        "name": "Delay",
+        "type": "float",
+        "min": 0,
+        "max": 2000,
+        "default": 0.0,
+        "display": "string"
+      },
+      {
+        "key": "motion",
+        "name": "Motion",
+        "type": "enum",
+        "options": [
+          "Off",
+          "On"
+        ],
+        "default": "On"
+      }
+    ]
+  }
+}

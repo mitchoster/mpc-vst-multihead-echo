@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.0.1",
+    "device": "MPC Live II",
+    "firmware": "3.9.1.2 (AZ0x 5.0.17)",
+    "date": "2026-11-02",
+    "notes": "Plugin loaded, played and saved with a project; 9 presets in the PRESET menu; companion screen reached from a phone on the LAN and used to change parameters (swipe between ECHO/TAPE/SETUP, drag knobs, hold WARP/TWIST/JOG, tap a mode). Bench p99 24.4 % (D5 gate 25 %). Not tested on Force."
+  }
+]

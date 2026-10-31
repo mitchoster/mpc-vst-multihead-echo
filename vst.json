@@ -1,0 +1,47 @@
+{
+  "name": "MPC Multihead Echo",
+  "vendor": "LarryDaimond",
+  "uid": "MhEc",
+  "version": 1010,
+  "so": "mpc_multihead_echo.so",
+  "module": "src/airtape_module.json",
+  "effect": true,
+  "layout": "layout_roots.conf",
+  "art": "html",
+  "defines": {
+    "HAS_DISPLAY_REV": 1,
+    "DISPLAY_REV_NO_UPDATE": 1,
+    "MODULE_SUBDIR": "\".\"",
+    "HAS_LFO_BPM": 1
+  },
+  "build": {
+    "root": ".",
+    "sources": [
+      "src/dsp/airtape_module.cpp",
+      "src/dsp/companion.cpp",
+      "src/dsp/preamp.c",
+      "src/dsp/chorus.c",
+      "src/dsp/tape_imperfection.c",
+      "src/dsp/spread.c",
+      "src/ported/core/TapeEchoDSP.cpp"
+    ],
+    "cflags": [
+      "-std=gnu++17",
+      "-Isrc/ported/shared-dpf/dsp",
+      "-fno-gnu-unique",
+      "-O3",
+      "-ffast-math",
+      "-fno-finite-math-only",
+      "-fno-math-errno"
+    ],
+    "cflags_arm": [
+      "-mfpu=neon-vfpv4",
+      "-ftree-vectorize"
+    ],
+    "libs": [
+      "-lm",
+      "-lpthread"
+    ]
+  },
+  "presets": "presets.json"
+}

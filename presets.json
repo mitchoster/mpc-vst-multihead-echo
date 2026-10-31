@@ -1,0 +1,146 @@
+{
+ "presets": [
+  {
+   "name": "Init",
+   "values": {
+    "mode": "H3",
+    "rate": 0.45,
+    "intensity": 0.4,
+    "echo": 0.6,
+    "reverb": 0.2,
+    "mix": 0.5,
+    "preamp": "Warm",
+    "tapeage": "Used"
+   }
+  },
+  {
+   "name": "RE-201 Space",
+   "values": {
+    "mode": "H3",
+    "rate": 0.45,
+    "intensity": 0.55,
+    "echo": 0.7,
+    "reverb": 0.2,
+    "mix": 0.5,
+    "bass": 0.0,
+    "treble": 0.1,
+    "wow": 0.25,
+    "preamp": "Warm",
+    "saturation": 0.35,
+    "tapeage": "Used"
+   }
+  },
+  {
+   "name": "Multitap Wide",
+   "values": {
+    "mode": "H123R",
+    "rate": 0.4,
+    "intensity": 0.5,
+    "echo": 0.65,
+    "reverb": 0.25,
+    "mix": 0.5,
+    "bass": -0.05,
+    "treble": 0.15,
+    "wow": 0.2,
+    "preamp": "Clean",
+    "saturation": 0.15,
+    "spread": 3.5,
+    "chorus": 0.3
+   }
+  },
+  {
+   "name": "Dub Wash",
+   "values": {
+    "mode": "H2+3",
+    "rate": 0.3,
+    "intensity": 0.78,
+    "echo": 0.8,
+    "reverb": 0.55,
+    "mix": 0.55,
+    "bass": 0.25,
+    "treble": -0.25,
+    "wow": 0.35,
+    "preamp": "Warm",
+    "saturation": 0.55,
+    "spread": 4.5
+   }
+  },
+  {
+   "name": "Broken Tape",
+   "values": {
+    "mode": "H2",
+    "rate": 0.55,
+    "intensity": 0.45,
+    "echo": 0.6,
+    "reverb": 0.15,
+    "mix": 0.5,
+    "treble": -0.1,
+    "wow": 0.65,
+    "preamp": "Dirty",
+    "saturation": 0.45,
+    "tapeage": "Worn",
+    "dropouts": 0.6,
+    "hiss": 0.35
+   }
+  },
+  {
+   "name": "Slapback",
+   "values": {
+    "mode": "H1",
+    "rate": 0.85,
+    "intensity": 0.18,
+    "echo": 0.55,
+    "reverb": 0.05,
+    "mix": 0.35,
+    "treble": 0.1,
+    "wow": 0.1,
+    "preamp": "Warm",
+    "saturation": 0.25
+   }
+  },
+  {
+   "name": "Chorus Echo",
+   "values": {
+    "mode": "H12+R",
+    "rate": 0.6,
+    "intensity": 0.4,
+    "echo": 0.55,
+    "reverb": 0.3,
+    "mix": 0.5,
+    "wow": 0.3,
+    "preamp": "Clean",
+    "saturation": 0.1,
+    "chorus": 0.65,
+    "spread": 2.0
+   }
+  },
+  {
+   "name": "Send Return",
+   "values": {
+    "mode": "H3",
+    "rate": 0.45,
+    "intensity": 0.6,
+    "echo": 0.75,
+    "reverb": 0.3,
+    "mix": 0.5,
+    "preamp": "Warm",
+    "saturation": 0.3,
+    "wetonly": "On"
+   }
+  },
+  {
+   "name": "Dirty Preamp",
+   "values": {
+    "mode": "H123R",
+    "rate": 0.35,
+    "intensity": 0.5,
+    "echo": 0.55,
+    "reverb": 0.1,
+    "mix": 0.45,
+    "preamp": "Dirty",
+    "saturation": 0.8,
+    "tapeage": "Used"
+   }
+  }
+ ]
+}
