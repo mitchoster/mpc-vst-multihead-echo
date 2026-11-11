@@ -3,7 +3,14 @@
     "version": "1.0.1",
     "device": "MPC Live II",
     "firmware": "3.9.1.2 (AZ0x 5.0.17)",
-    "date": "2026-10-31",
+    "date": "2026-11-02",
     "notes": "Plugin loaded, played and saved with a project; 9 presets in the PRESET menu; companion screen reached from a phone on the LAN and used to change parameters (swipe between ECHO/TAPE/SETUP, drag knobs, hold WARP/TWIST/JOG, tap a mode). Bench p99 24.4 % (D5 gate 25 %). Not tested on Force."
+  },
+  {
+    "version": "1.0.3",
+    "device": "MPC Live II",
+    "firmware": "MPC OS 3.x (AZ0x)",
+    "date": "2026-11-11",
+    "notes": "Re-inserted after the deploy: companion /state answers from the new instance, the loaded .so is 010b4fdee4e5693c70567e4c39a55129 and /qr.svg serves 2347 bytes. On the device screen the pairing QR sits bottom-left on the CHARACTER page (user-confirmed), and the companion page's three tape heads are evenly spaced over the ribbon (user-confirmed). Bench p99 24.8 % (D5 gate 25 %, WARN). Not tested on Force."
   }
 ]

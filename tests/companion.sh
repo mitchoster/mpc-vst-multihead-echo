@@ -17,7 +17,7 @@ docker run --rm -e "MHEC_HTTP_PORT=$PORT" -e "MHEC_OFF_PORT=$OFF_PORT" \
   -v "$HERE":/w -w /w gcc:12 bash -lc '
 set -e
 c++ -std=gnu++17 -O2 -Wall -Wextra -I. -Isrc -Isrc/ported/shared-dpf/dsp -o /tmp/cp_test \
-  tests/companion_test.cpp src/dsp/airtape_module.cpp src/dsp/companion.cpp src/dsp/preamp.c \
+  tests/companion_test.cpp src/dsp/airtape_module.cpp src/dsp/companion.cpp src/dsp/qrcodegen.c src/dsp/preamp.c \
   src/dsp/chorus.c src/dsp/tape_imperfection.c src/dsp/spread.c src/ported/core/TapeEchoDSP.cpp \
   -lm -lpthread 2>&1 | grep -E "error|Error" && exit 1 || true
 /tmp/cp_test

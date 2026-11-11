@@ -31,7 +31,8 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="bar"><span id="link"><b>LIVE</b> <span id="host"></span></span>
+<div id="bar"><span id="link"><b>LIVE</b> <span id="host"></span><br>
+<span id="pair" style="opacity:.72;font-size:11px"></span></span>
 <span><button id="fs">Fullscreen</button></span></div>
 <script>
 (() => {
@@ -61,11 +62,25 @@ var st = { delay_ms: 140, bpm: 120, rate: 0.45, wet: 0, wow_pct: 0, mode: 2, fb:
            echo: 0.6, mix: 0.5, intensity: 0.4, reverb: 0.2,
            heads: [0, 0, 1], rev_head: 0, active: 0, count: 0, instance: 0, age_ms: 0 };
 var MODES = ['H1','H2','H3','H2+3','H1+R','H2+R','H3+R','H12+R','H23+R','H13+R','H123R','REV'];
-var RATIO = [1.0, 1.91172, 2.76118], TAPE_LEN = 2.9;
-/* where the heads sit on the tape, straight from the core's ratios (head 1 at one delay,
- * head 3 at 2.76 of it) — the drawing uses the same numbers the sound does */
-var HEADPOS = RATIO.map(function (r) { return r / TAPE_LEN; });
+var RATIO = [1.0, 1.91172, 2.76118], R_SPAN = 2.76118 - 1.0, TAPE_MARGIN = 0.12;
+/* Where a tape position (in delay units from the record head) sits on the drawn ribbon.
+ * The three heads are spread evenly between two equal margins: the sound's ratios put head 1 at
+ * 1.0 and head 3 at 2.76 delay lengths, so mapping the bare ratios onto the ribbon left the first
+ * third of the tape empty and pushed all three heads to the right (2026-11-11). The timing is not
+ * touched - pulses travel in delay units and only get mapped here, so head 1 is still hit after
+ * exactly one delay. */
+function tapeU(r) { return TAPE_MARGIN + (1 - 2 * TAPE_MARGIN) * (r - RATIO[0]) / R_SPAN; }
+var HEADPOS = RATIO.map(tapeU);
 var linkOk = false, lastHeard = 0;
+var pairEl = document.getElementById('pair');
+var pairText = '';   /* what the bar shows a second phone: this plugin's own address */
+
+function setPair() {
+  var u = (st && typeof st.url === 'string' && st.url) ? st.url : location.host;
+  pairText = u;
+  if (pairEl) { pairEl.textContent = 'PAIR ' + u; pairEl.style.pointerEvents = 'auto'; pairEl.style.cursor = 'pointer';
+    pairEl.onclick = function () { var q = document.getElementById('qr'); if (q) q.style.display = (q.style.display === 'none' ? 'block' : 'none'); }; }
+}
 
 /* control state */
 var hits = [];              /* interactive regions of the last frame */
@@ -77,11 +92,12 @@ var envAt = 0;
 function poll() {
   fetch('/state', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     st = j; linkOk = true; lastHeard = performance.now();
+    setPair();
     link.className = '';
     hostEl.textContent = location.host;
   }).catch(function () { linkOk = false; });
 }
-setInterval(poll, 140); poll();
+setInterval(poll, 140); setPair(); poll();
 
 /* ---- writes: the page drives the machine ----------------------------------
  * One tiny endpoint: POST /set?k=<param>&v=<value>. The server queues it and the plugin applies
@@ -515,8 +531,8 @@ function echoBody(dt, L, now) {
   for (var h = 0; h < 3; h++) {
     var hx = x0 + (x1 - x0) * headPos[h], on = st.heads[h];
     for (var p = 0; p < pulses.length; p++) {
-      var d = Math.abs(pulses[p] - headPos[h]);
-      if (d < 0.02) flash[h] = Math.max(flash[h], 1 - d / 0.02);
+      var d = Math.abs(pulses[p] - RATIO[h]);        /* delay units, like the head itself */
+      if (d < 0.06) flash[h] = Math.max(flash[h], 1 - d / 0.06);
     }
     var hw = Math.max(9, bay.w * 0.026), hh = Math.max(12, bay.h * 0.13);
     ctx.beginPath();
@@ -563,9 +579,10 @@ function echoBody(dt, L, now) {
   ctx.globalAlpha = 1;
 
   /* the pulses: one per delay period, travelling the tape */
-  var dv = dt / (Math.max(20, st.delay_ms) / 1000) / TAPE_LEN;
+  /* pulses live in delay units (0 = the record head, 1 = one delay of tape); tapeU() maps them */
+  var dv = dt / (Math.max(20, st.delay_ms) / 1000);
   for (var i = 0; i < pulses.length; i++) pulses[i] += dv;
-  pulses = pulses.filter(function (q) { return q < 1.02; });
+  pulses = pulses.filter(function (q) { return q < RATIO[2] + 0.25; });
   spawn += dt * 1000 / Math.max(20, st.delay_ms) * tapeRun;
   while (spawn >= 1) { spawn -= 1; pulses.push(0); }
   var pc = st.fb === 2 ? RED : st.fb === 1 ? AMBER : GREEN_HI;
@@ -573,14 +590,17 @@ function echoBody(dt, L, now) {
     var p0 = pulses[k];
     /* the trail: where the pulse just was, three ghosts that fade out */
     for (var g3 = 3; g3 >= 1; g3--) {
-      var gx3 = x0 + (x1 - x0) * (p0 - g3 * 0.006);
-      if (gx3 < x0) continue;
+      var gu = tapeU(p0 - g3 * 0.017);
+      if (gu < 0 || gu > 1) continue;
+      var gx3 = x0 + (x1 - x0) * gu;
       ctx.beginPath(); ctx.arc(gx3, edgeY(gx3, 0), Math.max(1.2, tapeH * (0.2 - g3 * 0.04)), 0, 6.2832);
       ctx.globalAlpha = (0.22 - g3 * 0.06) * (st.active ? 1 : 0.4);
       ctx.fillStyle = pc; ctx.fill();
     }
-    var px = x0 + (x1 - x0) * p0;
-    var fade = 0.35 + 0.65 * (1 - p0);
+    var pu = tapeU(p0);
+    if (pu < 0 || pu > 1) continue;
+    var px = x0 + (x1 - x0) * pu;
+    var fade = 0.35 + 0.65 * (1 - pu);
     ctx.beginPath(); ctx.arc(px, edgeY(px, 0), Math.max(2, tapeH * 0.2), 0, 6.2832);
     ctx.globalAlpha = fade * (st.active ? 1 : 0.4);
     ctx.fillStyle = pc; ctx.shadowColor = pc; ctx.shadowBlur = 8; ctx.fill();
@@ -965,9 +985,12 @@ window.__mhePanel = {
   page: function () { return { at: pagePos, target: pageN }; },
   goPage: function (i) { pageN = i; pagePos = i; },
   setState: function (o) { for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) st[k] = o[k]; },
+  pair: function () { return pairText; },
+  refreshPair: setPair,
   portrait: function () { return portrait; }
 };
 })();
 </script>
+<img id="qr" src="/qr.svg" alt="" style="display:none;position:fixed;right:14px;bottom:64px;width:140px;height:140px;border:7px solid #e9e4d2;border-radius:8px;background:#e9e4d2">
 </body>
 </html>

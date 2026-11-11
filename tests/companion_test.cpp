@@ -161,6 +161,17 @@ int main(int argc, char **argv) {
   check(status == 200 && js.find("\"active\":1") != std::string::npos, "/state is live", str_field(js, "active"));
   check(js.find("\"count\":1") != std::string::npos, "one instance is reported", str_field(js, "count"));
 
+  /* the address a phone opens, and the port actually bound */
+  check(num(js, "port") == (double)g_port, "the reported port is the bound one",
+        std::to_string(num(js, "port")));
+  {
+    const std::string u = js.substr(js.find("\"url\":\"") + 7);
+    const std::string url_val = u.substr(0, u.find('"'));
+    check(url_val.compare(0, 7, "http://") == 0 &&
+          url_val.find(":" + std::to_string(g_port) + "/") != std::string::npos,
+          "the URL is this listener, ready to type or scan", url_val);
+  }
+
   const double wet = num(js, "wet");
   check(wet > 0.05 && wet <= 1.0, "the wet level reaches the page", std::to_string(wet));
   const double ms = num(js, "delay_ms");
@@ -252,6 +263,30 @@ int main(int argc, char **argv) {
   check(diag.find("127.0.0.1") != std::string::npos, "/diag shows the peer address", "found");
   check(diag.find("/set") != std::string::npos || diag.find("/state") != std::string::npos,
         "/diag lists the paths that arrived", "found");
+
+  /* Browsers send header names in their own case (often lowercase); the check must not
+   * depend on the exact bytes curl happens to send. */
+  {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in a;
+    std::memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons((unsigned short)g_port);
+    a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    int code = 0;
+    if (fd >= 0 && connect(fd, (struct sockaddr *)&a, sizeof a) == 0) {
+      char req[192];
+      const int n = std::snprintf(req, sizeof req,
+                                  "POST /set?k=intensity&v=0.40 HTTP/1.1\r\nHost: x\r\nX-Mhe: 1\r\n\r\n");
+      if (send(fd, req, (size_t)n, 0) > 0) {
+        char buf[256];
+        const ssize_t r = recv(fd, buf, sizeof buf - 1, 0);
+        if (r > 0) { buf[r] = 0; std::sscanf(buf, "HTTP/1.1 %d", &code); }
+      }
+    }
+    if (fd >= 0) close(fd);
+    check(code == 200, "a mixed-case write header is accepted", std::to_string(code));
+  }
 
   http(g_port, "POST", "/state", &status);
   check(status == 405, "the feed is read-only (POST refused)", std::to_string(status));

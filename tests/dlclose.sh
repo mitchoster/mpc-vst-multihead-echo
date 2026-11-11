@@ -15,7 +15,7 @@ host() { printf '%s' "$1"; }   # Docker sees the same paths on a normal host
 docker run --rm -e "MHEC_HTTP_PORT=$PORT" -v "$(host "$HERE")":/w -w /w gcc:12 bash -lc '
 set -e
 g++ -std=gnu++17 -O2 -fPIC -shared -Wall -Wextra -Isrc -o /tmp/libcp_under_test.so \
-  src/dsp/companion.cpp tests/dlclose_shim.cpp -lpthread
+  src/dsp/companion.cpp src/dsp/qrcodegen.c tests/dlclose_shim.cpp -lpthread
 g++ -std=gnu++17 -O2 -Wall -Wextra -o /tmp/dlclose_test tests/dlclose_test.cpp -ldl
 
 echo "== A: detach, then unload (must survive)"

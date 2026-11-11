@@ -13,12 +13,16 @@
 
 #include <atomic>
 #include <cmath>
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 
+#include <arpa/inet.h>
 #include <errno.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <poll.h>
 #include <pthread.h>
@@ -26,9 +30,42 @@
 #include <unistd.h>
 
 #include "companion_page.h"
+#include "qrcodegen.h"
 
 namespace mhec {
 namespace {
+
+unsigned now_ms();
+
+/* The address a phone should open. Cached for 10 s: /state is polled at 7 Hz and
+ * getifaddrs() allocates, so walking the interface list 250 times a minute on the HTTP
+ * thread is waste. The cache also survives a DHCP change within ten seconds. */
+void local_ip(char *out, size_t cap) {
+  static char cached[16] = "";
+  static unsigned cached_at = 0;
+  if (cached[0]) {
+    const unsigned now = now_ms();
+    if (now - cached_at < 10000u) { std::snprintf(out, cap, "%s", cached); return; }
+    cached_at = now;
+  } else {
+    cached_at = now_ms();
+  }
+  out[0] = 0;
+  struct ifaddrs *ifap = nullptr;
+  if (getifaddrs(&ifap) == 0) {
+    for (struct ifaddrs *ifa = ifap; ifa; ifa = ifa->ifa_next) {
+      if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET) continue;
+      if (!(ifa->ifa_flags & IFF_UP)) continue;
+      struct sockaddr_in *a4 = (struct sockaddr_in *)ifa->ifa_addr;
+      if (a4->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) continue;
+      inet_ntop(AF_INET, &a4->sin_addr, out, cap);
+      break;
+    }
+    freeifaddrs(ifap);
+  }
+  if (!out[0]) std::snprintf(out, cap, "127.0.0.1");
+  std::snprintf(cached, sizeof cached, "%s", out);
+}
 
 /* "add to home screen" parts, so the panel opens like an app (VADER does the same). */
 const char kManifest[] =
@@ -285,6 +322,8 @@ int state_json(char *buf, size_t cap, int requested) {
   read_values(idx, &v);
   const bool active = g_slots[idx].attached.load(std::memory_order_relaxed) != 0;
   const unsigned age = active ? (now_ms() - v.stamp_ms) : 0u;
+  char ip[16] = {0};
+  local_ip(ip, sizeof ip);
   const int n = std::snprintf(
       buf, cap,
       "{\"instance\":%d,\"count\":%d,\"active\":%d,\"age_ms\":%u,"
@@ -295,7 +334,7 @@ int state_json(char *buf, size_t cap, int requested) {
       "\"hiss\":%.3f,\"spread\":%.3f,\"mix\":%.3f,\"intensity\":%.3f,\"reverb\":%.3f,"
       "\"tapeage\":%d,\"preamp\":%d,\"wetonly\":%d,\"motion\":%d,"
       "\"twisttype\":%d,\"warptype\":%d,\"revmode\":%d,"
-      "\"heads\":[%d,%d,%d],\"rev_head\":%d}",
+      "\"heads\":[%d,%d,%d],\"rev_head\":%d,\"port\":%d,\"url\":\"http://%s:%d/\"}",
       idx, attached_count(), active ? 1 : 0, age,
       (double)v.delay_ms, (double)v.bpm, (double)v.rate, (double)v.wet, (double)v.wow_pct,
       v.mode, v.fb, v.sync, v.drift,
@@ -303,7 +342,8 @@ int state_json(char *buf, size_t cap, int requested) {
       (double)v.echo, (double)v.wow, (double)v.chorus, (double)v.saturation, (double)v.dropouts,
       (double)v.hiss, (double)v.spread, (double)v.mix, (double)v.intensity, (double)v.reverb,
       v.tapeage, v.preamp, v.wetonly, v.motion, v.twisttype, v.warptype, v.revmode,
-      v.heads[0], v.heads[1], v.heads[2], v.reverb_head);
+      v.heads[0], v.heads[1], v.heads[2], v.reverb_head,
+      g_port.load(), ip, g_port.load());
   return n < 0 ? 0 : (int)((size_t)n < cap ? (size_t)n : cap);
 }
 
@@ -339,6 +379,57 @@ void remember(const char *remote, const char *method, const char *target, const 
     std::memcpy(ua_buf, ua, n);
   }
   std::snprintf(d.ua, sizeof d.ua, "%s", ua_buf);
+}
+
+
+/* Header NAMES are case-insensitive (RFC 7230), and browsers send them in their own case -
+ * often all lowercase. A literal strstr(req, "X-MHE: 1") therefore rejected every tap from a
+ * real browser ("missing X-MHE header") while curl with the exact bytes worked. */
+bool header_is_set(const char *req, const char *name) {
+  const size_t n = std::strlen(name);
+  for (const char *p = req; p && *p;) {
+    const char *eol = std::strchr(p, '\n');
+    const char *end = eol ? eol : p + std::strlen(p);
+    bool match = (size_t)(end - p) > n;
+    for (size_t i = 0; match && i < n; ++i)
+      if (std::tolower((unsigned char)p[i]) != std::tolower((unsigned char)name[i])) match = false;
+    if (match && p[n] == ':') {
+      const char *v = p + n + 1;
+      while (v < end && (*v == ' ' || *v == '\t')) ++v;
+      return v < end && *v == '1';
+    }
+    if (!eol) break;
+    p = eol + 1;
+  }
+  return false;
+}
+
+
+/* The QR a second phone scans: the same URL /state publishes. Encoded here so one
+ * implementation serves the page, a wrapper app and anything else. Encoder: Project
+ * Nayuki's qrcodegen (MIT), vendored in qrcodegen.c. */
+int qr_svg(char *out, size_t cap, const char *text) {
+  static uint8_t qr[qrcodegen_BUFFER_LEN_MAX];
+  static uint8_t tmp[qrcodegen_BUFFER_LEN_MAX];
+  if (!qrcodegen_encodeText(text, tmp, qr, qrcodegen_Ecc_LOW, qrcodegen_VERSION_MIN,
+                            qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true))
+    return 0;
+  const int n = qrcodegen_getSize(qr);
+  int w = std::snprintf(out, cap,
+      "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-2 -2 %d %d\" shape-rendering=\"crispEdges\">"
+      "<rect x=\"-2\" y=\"-2\" width=\"%d\" height=\"%d\" fill=\"#e9e4d2\"/>"
+      "<path fill=\"#0a0c09\" d=\"", n + 4, n + 4, n + 4, n + 4);
+  for (int y = 0; y < n && w > 0; y++)
+    for (int x = 0; x < n; x++) {
+      if (!qrcodegen_getModule(qr, x, y)) continue;
+      int run = 1;
+      while (x + run < n && qrcodegen_getModule(qr, x + run, y)) run++;
+      w += std::snprintf(out + (w < (int)cap ? w : 0), w < (int)cap ? cap - (size_t)w : 0,
+                         "M%d %dh%dv1h-%dz", x, y, run, run);
+      x += run - 1;
+    }
+  if (w > 0) w += std::snprintf(out + (w < (int)cap ? w : 0), w < (int)cap ? cap - (size_t)w : 0, "\"/></svg>");
+  return w > 0 && (size_t)w < cap ? w : 0;
 }
 
 void handle_client(int fd, const char *remote) {
@@ -397,7 +488,7 @@ void handle_client(int fd, const char *remote) {
   if (post && !std::strcmp(target, "/set")) {
     /* A custom header means a cross-site page would need a CORS preflight, which this server
      * never grants; a plain form post or a no-cors fetch cannot set one (review, 2026-11-02). */
-    if (!std::strstr(req, "X-MHE: 1")) {
+    if (!header_is_set(req, "X-MHE")) {
       send_body(fd, 403, "Forbidden", "text/plain", "missing X-MHE header\n", 24, false);
       return;
     }
@@ -456,7 +547,7 @@ void handle_client(int fd, const char *remote) {
     return;
   }
   if (!std::strcmp(target, "/state")) {
-    char json[720];
+    char json[900];
     const int n = state_json(json, sizeof json, requested);
     send_body(fd, 200, "OK", "application/json", json, (size_t)n, head_only);
     return;
@@ -464,6 +555,17 @@ void handle_client(int fd, const char *remote) {
   if (!std::strcmp(target, "/manifest.json")) {
     send_body(fd, 200, "OK", "application/manifest+json", kManifest, sizeof(kManifest) - 1,
               head_only);
+    return;
+  }
+  if (!std::strcmp(target, "/qr.svg")) {
+    static char svg[16384];
+    char url[64];
+    char ip[16] = {0};
+    local_ip(ip, sizeof ip);
+    std::snprintf(url, sizeof url, "http://%s:%d/", ip, g_port.load());
+    const int n = qr_svg(svg, sizeof svg, url);
+    if (n <= 0) { send_body(fd, 500, "Internal Error", "text/plain", "qr\n", 3, head_only); return; }
+    send_body(fd, 200, "OK", "image/svg+xml", svg, (size_t)n, head_only);
     return;
   }
   if (!std::strcmp(target, "/icon.svg")) {

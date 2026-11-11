@@ -10,7 +10,7 @@ grep -q '"HAS_LFO_BPM"' "$HERE/vst.json" || {
 docker run --rm -v "$HERE":/w -w /w gcc:12 bash -lc '
 set -e
 c++ -std=gnu++17 -O2 -Wall -Wextra -I. -Isrc -Isrc/ported/shared-dpf/dsp -o /tmp/t14_test \
-  tests/t14_test.cpp src/dsp/airtape_module.cpp src/dsp/companion.cpp src/dsp/preamp.c src/dsp/chorus.c \
+  tests/t14_test.cpp src/dsp/airtape_module.cpp src/dsp/companion.cpp src/dsp/qrcodegen.c src/dsp/preamp.c src/dsp/chorus.c \
   src/dsp/tape_imperfection.c src/dsp/spread.c src/ported/core/TapeEchoDSP.cpp -lm -lpthread 2>&1 \
   | grep -E "error" && exit 1 || true
 /tmp/t14_test'
